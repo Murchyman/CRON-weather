@@ -108,6 +108,13 @@ async function main() {
     "MiddleEast",
   ];
 
+  await setDoc(doc(db, "Sunny", "LastUpdated"), {
+    // queensland time in human readable format
+    time: new Date().toLocaleString("en-AU", {
+      timeZone: "Australia/Queensland",
+    }),
+  });
+
   for (let i = 0; i < regionNames.length; i++) {
     console.log(`Checking  Region ${regionNames[i]}`);
     await setDoc(doc(db, "Sunny", regionNames[i]), {});
