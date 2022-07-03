@@ -1,6 +1,8 @@
 {
-	"dependencies": {
-		"fs": "0.0.1-security",
-		"puppeteer": "^15.3.0"
-	}
+  "dependencies": {
+    "firebase": "^9.8.4",
+    "fs": "0.0.1-security",
+    "puppeteer": "^15.3.0"
+  },
+  "type": "module"
 }

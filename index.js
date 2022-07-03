@@ -1,12 +1,31 @@
-const puppeteer = require("puppeteer");
+import puppeteer from "puppeteer";
+import { createRequire } from "module"; // Bring in the ability to create the 'require' method
+const require = createRequire(import.meta.url); // construct the require method
 const regions = require("./regions.json");
-const fs = require("fs");
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { doc, setDoc, updateDoc } from "firebase/firestore";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDxpql2KVn3xHjwJPgrm9W73wkgLIJKeKU",
+  authDomain: "rain-makes-me-sad.firebaseapp.com",
+  projectId: "rain-makes-me-sad",
+  storageBucket: "rain-makes-me-sad.appspot.com",
+  messagingSenderId: "206139515579",
+  appId: "1:206139515579:web:901de5d874e103b94ebf9e",
+};
+
+const app = initializeApp(firebaseConfig);
+
+const db = getFirestore(app);
+
+const browserConfig = process.env.BROWSERCONFIG || {
+  headless: true,
+  args: ["--disable-setuid-sandbox", "--no-sandbox"],
+};
 
 async function weather(city) {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ["--disable-setuid-sandbox", "--no-sandbox"],
-  });
+  const browser = await puppeteer.launch(browserConfig);
   const page = await browser.newPage();
   await page.goto(`https://www.google.com/search?q=weather+${city}`);
   await page.waitForNetworkIdle();
@@ -40,7 +59,6 @@ async function countryCheck(country) {
   let data = [];
   for (let i = 0; i < country.length; i++) {
     data.push(await weather(country[i]));
-    console.log(data[i]);
   }
 
   const sunny = [];
@@ -55,7 +73,9 @@ async function countryCheck(country) {
         data[i][j].Weather === "Mostly cloudy" ||
         data[i][j].Weather === "Thunderstorm" ||
         data[i][j].Weather === "Scattered thunderstorms" ||
-        data[i][j].Weather === "Isolated thunderstorms"
+        data[i][j].Weather === "Isolated thunderstorms" ||
+        data[i][j].Weather === "Cloudy with periodic rain" ||
+        data[i][j].Weather === "Cloudy with brief rain"
       ) {
         rain = true;
       }
@@ -68,17 +88,40 @@ async function countryCheck(country) {
 }
 
 async function main() {
-  const data = {
-    Oceania: await countryCheck(regions.Oceania),
-    Africa: await countryCheck(regions.Africa),
-    Asia: await countryCheck(regions.Asia),
-    Europe: await countryCheck(regions.Europe),
-    NorthAmerica: await countryCheck(regions.NorthAmerica),
-    SouthAmerica: await countryCheck(regions.SouthAmerica),
-    MiddleEast: await countryCheck(regions.MiddleEast),
-  };
+  // const data = {
+  //   Oceania: await countryCheck(regions.Oceania),
+  //   Africa: await countryCheck(regions.Africa),
+  //   Asia: await countryCheck(regions.Asia),
+  //   Europe: await countryCheck(regions.Europe),
+  //   NorthAmerica: await countryCheck(regions.NorthAmerica),
+  //   SouthAmerica: await countryCheck(regions.SouthAmerica),
+  //   MiddleEast: await countryCheck(regions.MiddleEast),
+  // };
+  const regionNames = [
+    "Africa",
+    "Asia",
+    "Europe",
+    "NorthAmerica",
+    "SouthAmerica",
+    "Oceania",
+    "MiddleEast",
+  ];
 
-  fs.writeFileSync("./data.json", JSON.stringify(data));
+  for (let i = 0; i < regionNames.length; i++) {
+    await setDoc(doc(db, "Sunny", regionNames[i]), {});
+    const data = await countryCheck(regions[regionNames[i]]);
+    for (let j = 0; j < data.length; j++) {
+      console.log(data[j]);
+      await setDoc(
+        doc(db, "Sunny", regionNames[i]),
+        {
+          [data[j]]: true,
+        },
+        { merge: true }
+      );
+    }
+  }
+  process.exit(0);
 }
 
 main();
