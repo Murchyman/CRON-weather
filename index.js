@@ -58,7 +58,7 @@ async function weather(city) {
 async function countryCheck(country) {
   let data = [];
   for (let i = 0; i < country.length; i++) {
-    console.log(`Checking ${country[i]}`);
+    console.log(`Checking Country ${country[i]}`);
     data.push(await weather(country[i]));
   }
 
@@ -109,7 +109,7 @@ async function main() {
   ];
 
   for (let i = 0; i < regionNames.length; i++) {
-    console.log(`Checking ${regionNames[i]}`);
+    console.log(`Checking  Region ${regionNames[i]}`);
     await setDoc(doc(db, "Sunny", regionNames[i]), {});
     const data = await countryCheck(regions[regionNames[i]]);
     for (let j = 0; j < data.length; j++) {
